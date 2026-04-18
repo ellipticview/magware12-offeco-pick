@@ -1,0 +1,419 @@
+-- allium: 3
+-- goedgepickt-orders-export.allium
+--
+-- Scope: Full application for downloading orders and exporting them to CSV
+-- Includes: Main window behavior, order download flow, CSV export, progress window updates
+-- Excludes:
+--   - Recovery or cleanup when the application is closed during an in-progress download
+-- Dependencies: External orders REST API
+
+------------------------------------------------------------
+-- Value Types
+------------------------------------------------------------
+
+value RemoteOrderData {
+    external_display_id: String
+    status: String
+    billing_address: String?
+    billing_phone: String?
+    billing_email: String?
+    shipping_first_name: String?
+    shipping_last_name: String?
+    shipping_house_number: String?
+    shipping_house_number_addition: String?
+    shipping_zipcode: String?
+    shipping_city: String?
+    shipping_country: String?
+    customer_note: String?
+}
+
+value CsvRow {
+    id: String
+    datumdistributiedag: String
+    naam: String
+    straatnaam: String
+    huisnummer: String
+    huisnummertoevoeging: String
+    postcode: String
+    plaatsnaam: String
+    country_code: String
+    telefoon_nummer: String
+    email: String
+    bezoeken_na: String
+    bezoeken_voor: String
+    locatieinstructie: String
+}
+
+------------------------------------------------------------
+-- Enumerations
+------------------------------------------------------------
+
+enum DownloadRunStatus { idle | in_progress | completed | failed }
+
+------------------------------------------------------------
+-- Entities and Variants
+------------------------------------------------------------
+
+entity User {}
+
+entity LocalFilesystemRuntime {}
+
+entity Application {
+    csv_filename: String
+    ui_language: dutch
+    download_button_label: String
+    orders_api: OrdersApiRuntime with application = this
+    download_run: DownloadRun with application = this
+}
+
+entity DownloadRun {
+    application: Application
+    status: DownloadRunStatus
+
+    transitions status {
+        idle -> in_progress
+        in_progress -> completed
+        in_progress -> failed
+        completed -> in_progress
+        failed -> in_progress
+    }
+
+    started_at: Timestamp?
+    finished_at: Timestamp?
+    header_written: Boolean
+    exported_order_count: Integer
+    nl_exported_order_count: Integer
+    be_exported_order_count: Integer
+
+    progress_messages: ProgressMessage with run = this
+    exported_orders: ExportedOrder with run = this
+
+    download_button_enabled: status != in_progress and application.orders_api.token_validation = available
+}
+
+entity ProgressMessage {
+    run: DownloadRun
+    sequence_number: Integer
+    text: String
+    kind: progress | completed | error
+}
+
+entity ExportedOrder {
+    run: DownloadRun
+    sequence_number: Integer
+    source_order: RemoteOrderData
+    csv_row: CsvRow
+}
+
+entity OrdersApiRuntime {
+    application: Application
+    endpoint: String
+    token_file_name: String
+    token_validation: pending | available | invalid
+    startup_token: String?
+}
+
+------------------------------------------------------------
+-- Defaults
+------------------------------------------------------------
+
+default User user = {}
+
+default LocalFilesystemRuntime local_filesystem_runtime = {}
+
+default OrdersApiRuntime orders_api_runtime = {
+    application: application,
+    endpoint: "https://account.goedgepickt.nl/api/v1/orders",
+    token_file_name: "token.txt",
+    token_validation: pending,
+    startup_token: null
+}
+
+default Application application = {
+    csv_filename: "routigo-orders.csv",
+    ui_language: dutch,
+    download_button_label: "Download"
+}
+
+default DownloadRun current_download = {
+    application: application,
+    status: idle,
+    started_at: null,
+    finished_at: null,
+    header_written: false,
+    exported_order_count: 0,
+    nl_exported_order_count: 0,
+    be_exported_order_count: 0
+}
+
+------------------------------------------------------------
+-- Rules
+------------------------------------------------------------
+
+rule AcceptStartupToken {
+    when: StartupTokenValidated(filesystem, application, token)
+    requires: application.orders_api.token_validation = pending
+    ensures: application.orders_api.token_validation = available
+    ensures: application.orders_api.startup_token = token
+    @guidance
+        -- token.txt is read from the current working directory once at startup.
+        -- The validated token is reused for all download runs while the application remains open.
+}
+
+rule RejectStartupToken {
+    when: StartupTokenValidationFailed(filesystem, application, reason)
+    requires: application.orders_api.token_validation = pending
+    ensures: application.orders_api.token_validation = invalid
+    ensures: application.orders_api.startup_token = null
+    ensures:
+        ProgressMessage.created(
+            run: current_download,
+            sequence_number: next_progress_sequence(current_download),
+            text: token_validation_error_message(reason),
+            kind: error
+        )
+    @guidance
+        -- Validation checks only local file existence, readability and non-empty contents.
+        -- When validation fails, the application remains open and the download button stays disabled.
+}
+
+rule StartDownload {
+    when: UserPressesDownload(_, application)
+    requires: current_download.status != in_progress
+    requires: application.orders_api.token_validation = available
+    ensures:
+        for message in current_download.progress_messages:
+            not exists message
+    ensures:
+        for exported in current_download.exported_orders:
+            not exists exported
+    ensures: current_download.status = in_progress
+    ensures: current_download.started_at = now
+    ensures: current_download.finished_at = null
+    ensures: current_download.header_written = true
+    ensures: current_download.exported_order_count = 0
+    ensures: current_download.nl_exported_order_count = 0
+    ensures: current_download.be_exported_order_count = 0
+    @guidance
+        -- Starting a run overwrites routigo-orders.csv in the current working directory
+        -- without warning and writes the header row before the first exported order.
+}
+
+rule ExportQualifyingOrder {
+    when: RemoteOrderReceived(api, current_download, order, sequence_number)
+    requires: current_download.status = in_progress
+    requires: order.status = "ready_for_picking"
+    requires: order.shipping_country != null
+    requires: order.shipping_country in { "NL", "BE" }
+    ensures:
+        ExportedOrder.created(
+            run: current_download,
+            sequence_number: sequence_number,
+            source_order: order,
+            csv_row: {
+                id: order.external_display_id,
+                datumdistributiedag: distribution_date(now),
+                naam: export_name(
+                    order.shipping_first_name ?? "",
+                    order.shipping_last_name ?? "",
+                    order.external_display_id
+                ),
+                straatnaam: order.billing_address ?? "",
+                huisnummer: order.shipping_house_number ?? "",
+                huisnummertoevoeging: order.shipping_house_number_addition ?? "",
+                postcode: order.shipping_zipcode ?? "",
+                plaatsnaam: order.shipping_city ?? "",
+                country_code: order.shipping_country,
+                telefoon_nummer: order.billing_phone ?? "",
+                email: order.billing_email ?? "",
+                bezoeken_na: "",
+                bezoeken_voor: "",
+                locatieinstructie: order.customer_note ?? ""
+            }
+        )
+    ensures: current_download.exported_order_count = current_download.exported_order_count + 1
+    ensures:
+        if order.shipping_country = "NL":
+            current_download.nl_exported_order_count = current_download.nl_exported_order_count + 1
+        else:
+            current_download.be_exported_order_count = current_download.be_exported_order_count + 1
+    ensures:
+        ProgressMessage.created(
+            run: current_download,
+            sequence_number: next_progress_sequence(current_download),
+            text: export_progress_message(order.shipping_country, order.shipping_city ?? ""),
+            kind: progress
+        )
+    @guidance
+        -- Exported rows preserve the order in which qualifying orders are received from the API.
+}
+
+rule CompleteDownload {
+    when: AllOrderPagesRetrieved(api, current_download)
+    requires: current_download.status = in_progress
+    ensures: current_download.status = completed
+    ensures: current_download.finished_at = now
+    ensures:
+        ProgressMessage.created(
+            run: current_download,
+            sequence_number: next_progress_sequence(current_download),
+            text: completion_summary_message(
+                current_download.nl_exported_order_count,
+                current_download.be_exported_order_count,
+                current_download.exported_order_count
+            ),
+            kind: completed
+        )
+}
+
+rule FailDownload {
+    when: OrdersDownloadFailed(api, current_download, reason)
+    requires: current_download.status = in_progress
+    ensures: current_download.status = failed
+    ensures: current_download.finished_at = now
+    ensures:
+        ProgressMessage.created(
+            run: current_download,
+            sequence_number: next_progress_sequence(current_download),
+            text: download_error_message(reason),
+            kind: error
+        )
+    @guidance
+        -- Any CSV rows already written for the current run are retained.
+        -- The next manual download run overwrites the file from the header row onward.
+        -- The application does not retry automatically after a failure.
+        -- Technical failure messages shown in the progress window include the literal
+        -- error returned by the API so a programmer can diagnose the issue.
+}
+
+------------------------------------------------------------
+-- Invariants
+------------------------------------------------------------
+
+invariant ExportCountMatchesRows {
+    for run in DownloadRuns:
+        run.exported_order_count = run.exported_orders.count
+}
+
+invariant CountryCountsMatchRows {
+    for run in DownloadRuns:
+        run.nl_exported_order_count =
+            (run.exported_orders where source_order.shipping_country = "NL").count
+        and
+        run.be_exported_order_count =
+            (run.exported_orders where source_order.shipping_country = "BE").count
+}
+
+invariant OnlyNlAndBeAreExported {
+    for exported in ExportedOrders:
+        exported.source_order.shipping_country in { "NL", "BE" }
+}
+
+invariant OnlyReadyForPickingOrdersAreExported {
+    for exported in ExportedOrders:
+        exported.source_order.status = "ready_for_picking"
+}
+
+invariant HeaderExistsForEveryStartedRun {
+    for run in DownloadRuns:
+        run.status in { in_progress, completed, failed } implies run.header_written = true
+}
+
+------------------------------------------------------------
+-- Actor Declarations
+------------------------------------------------------------
+
+actor LocalFilesystem {
+    identified_by: LocalFilesystemRuntime where true
+}
+
+actor ExternalOrdersApi {
+    identified_by: OrdersApiRuntime where true
+}
+
+------------------------------------------------------------
+-- Surfaces
+------------------------------------------------------------
+
+surface StartupTokenFileIntegration {
+    facing filesystem: LocalFilesystem
+    let app = application
+    let api_runtime = app.orders_api
+
+    provides:
+        StartupTokenValidated(filesystem, app, token) when api_runtime.token_validation = pending
+        StartupTokenValidationFailed(filesystem, app, reason) when api_runtime.token_validation = pending
+
+    @guarantee TokenReadFromCurrentDirectory
+        -- On startup the application reads token.txt from the current working directory.
+
+    @guarantee TokenReadOnceAtStartup
+        -- Startup token validation happens once when the application starts.
+        -- The application does not re-read token.txt for later download runs.
+
+    @guidance
+        -- Successful validation requires token.txt to exist, be readable and contain a non-empty token.
+        -- Failure is reported immediately in the progress window before any download is attempted.
+}
+
+surface ExternalOrdersApiIntegration {
+    facing api: ExternalOrdersApi
+    let run = current_download
+    let app = application
+    let api_runtime = app.orders_api
+
+    provides:
+        RemoteOrderReceived(api, run, order, sequence_number)
+            when run.status = in_progress and api_runtime.token_validation = available
+        AllOrderPagesRetrieved(api, run)
+            when run.status = in_progress and api_runtime.token_validation = available
+        OrdersDownloadFailed(api, run, reason)
+            when run.status = in_progress and api_runtime.token_validation = available
+
+    @guarantee FixedOrdersRequest
+        -- Each download run calls https://account.goedgepickt.nl/api/v1/orders
+        -- with Authorization: Bearer <startup token>.
+        -- Request parameters are fixed to searchAttribute=status,
+        -- searchDelimiter==, searchValue=ready_for_picking, orderBy=createDate,
+        -- orderByDirection=asc and perPage=50.
+
+    @guarantee PaginationByLastPage
+        -- The application requests pages 1 through lastPage and stops after lastPage.
+
+    @guarantee MalformedOrFailedResponsesAbortRun
+        -- A non-success HTTP response, invalid JSON, missing pageInfo.lastPage
+        -- or missing items causes the current run to fail immediately.
+
+    @guidance
+        -- If any later page fails after earlier pages succeeded, the run fails immediately
+        -- and the partially written CSV is kept.
+        -- The progress window shows per-order export messages and final success or error,
+        -- but not page-retrieval messages.
+}
+
+surface MainWindow {
+    facing viewer: User
+    let app = application
+    let run = current_download
+
+    exposes:
+        app.download_button_label
+        run.download_button_enabled
+        for message in ordered_progress_messages(run.progress_messages):
+            message.text
+
+    provides:
+        UserPressesDownload(viewer, app) when run.download_button_enabled
+
+    @guarantee DutchInterface
+        -- All user-visible text on the surface is presented in Dutch.
+
+    @guarantee ProgressWindowResetPerRun
+        -- Starting a new download clears the progress window and replaces it
+        -- with messages from the new run only.
+
+    @guidance
+        -- The user may close the application while a download is in progress.
+        -- This specification does not require cleanup, cancellation or recovery
+        -- behavior for that case.
+}

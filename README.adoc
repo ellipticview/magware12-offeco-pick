@@ -1,5 +1,8 @@
 = Goedgepickt Orders Export
 
+== Introduction
+This tool allows the user to export orders from https://www.goedgepickt.nl/ in a CSV format that can be imported into https://www.routigo.com/
+
 == Technical Design
 
 === Stack
@@ -33,3 +36,17 @@ GitHub Actions builds the first `windows/amd64` target on pushes to `main` and o
 When you push a version tag such as `v1.0.0`, the same workflow also creates a GitHub Release and attaches the Windows executable there, which is the easiest place to download it from the GitHub website.
 
 The module `go` version is currently kept at `1.24.6` so it remains compatible with the Go toolchain bundled inside the current `fyne-cross` Windows image, while local development can still use a newer Go release.
+
+== Vendor Information
+=== Goedgepickt API
+API documentation: https://www.goedgepickt.dev/
+
+Assuming you get an API key and store this in file `token.txt`, the command below illustrates the API.
+
+.Get Orders
+----
+curl -H "Authorization: Bearer $(cat token.txt)" \
+  --location 'https://account.goedgepickt.nl/api/v1/orders?searchAttribute=status&searchDelimiter=%3D&searchValue=ready_for_picking&page=1&orderBy=createDate&orderByDirection=asc&perPage=50' > orders.json
+----
+
+Ths API returns a paginated result. Default 25 items per page, max 50.

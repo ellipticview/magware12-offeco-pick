@@ -7,6 +7,7 @@
 *.dll
 *.so
 *.dylib
+goedgepickt-orders-export
 
 # Test binary, built with `go test -c`
 *.test

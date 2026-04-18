@@ -1,0 +1,31 @@
+= Goedgepickt Orders Export
+
+== Technical Design
+
+=== Stack
+The application is written in Go + Fyne.
+
+The application is developed on Macos, but the target is Windows. Github Actions is used to compile to Windows.
+No installer is required.
+
+== Development
+
+Run the application locally:
+
+[source,shell]
+----
+zsh -lic 'go run ./cmd/goedgepickt-orders-export'
+----
+
+Build the application locally:
+
+[source,shell]
+----
+zsh -lic 'go build ./cmd/goedgepickt-orders-export'
+----
+
+The Codex app shell in this workspace does not currently expose `go` on the non-login PATH, even though Go is installed through `mise`. Using `zsh -lic '...'` ensures the login shell loads the `mise` environment first.
+
+== Windows Build
+
+GitHub Actions builds the first `windows/amd64` target and uploads the resulting executable as a workflow artifact named `goedgepickt-orders-export-windows-amd64`.

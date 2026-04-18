@@ -29,3 +29,5 @@ The Codex app shell in this workspace does not currently expose `go` on the non-
 == Windows Build
 
 GitHub Actions builds the first `windows/amd64` target and uploads the resulting executable as a workflow artifact named `goedgepickt-orders-export-windows-amd64`.
+
+The module `go` version is currently kept at `1.24.6` so it remains compatible with the Go toolchain bundled inside the current `fyne-cross` Windows image, while local development can still use a newer Go release.

@@ -36,8 +36,17 @@ jobs:
       - name: Collect Windows binary
         run: |
           mkdir -p release-assets
-          exe_path="$(find fyne-cross/dist/windows-amd64 -type f -name 'goedgepickt-orders-export.exe' | head -n 1)"
-          test -n "$exe_path"
+          exe_path=""
+          if [ -f "fyne-cross/bin/windows-amd64/goedgepickt-orders-export.exe" ]; then
+            exe_path="fyne-cross/bin/windows-amd64/goedgepickt-orders-export.exe"
+          else
+            exe_path="$(find . -type f -name 'goedgepickt-orders-export.exe' ! -path './.git/*' | sort | head -n 1)"
+          fi
+          test -n "$exe_path" || {
+            echo "Could not locate goedgepickt-orders-export.exe after fyne-cross build."
+            find fyne-cross -maxdepth 3 -type f 2>/dev/null | sort || true
+            exit 1
+          }
           cp "$exe_path" "release-assets/goedgepickt-orders-export-windows-amd64.exe"
 
       - name: Upload Windows artifact

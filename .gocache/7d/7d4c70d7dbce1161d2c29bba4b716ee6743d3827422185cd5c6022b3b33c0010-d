@@ -1,0 +1,24 @@
+# test log
+getenv TMPDIR
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestFileCSVExporterWritesHeaderAndRows3731602140/001/routigo-orders.csv
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestFileCSVExporterWritesHeaderAndRows3731602140/001/routigo-orders.csv
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T
+getenv TMPDIR
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestFileCSVExporterOverwritesFilePerRun2493522460/001/routigo-orders.csv
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestFileCSVExporterOverwritesFilePerRun2493522460/001/routigo-orders.csv
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestFileCSVExporterOverwritesFilePerRun2493522460/001/routigo-orders.csv
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T
+getenv TMPDIR
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestTokenFileSourceLoadvalid_token27035840/001/token.txt
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestTokenFileSourceLoadvalid_token27035840/001/token.txt
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T
+getenv TMPDIR
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestTokenFileSourceLoadmissing_token_file2193367235/001/missing-token.txt
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T
+getenv TMPDIR
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestTokenFileSourceLoadunreadable_token_path1361012621/001
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T
+getenv TMPDIR
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestTokenFileSourceLoadempty_token_file2023136652/001/token.txt
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T/TestTokenFileSourceLoadempty_token_file2023136652/001/token.txt
+open /var/folders/35/c0nnm2_d0tz1lhh7v6zqn0n00000gn/T

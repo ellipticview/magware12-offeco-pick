@@ -27,6 +27,12 @@ go.work.sum
 # env file
 .env
 
+# Login token
+token.txt
+
+# Output file
+routigo-orders.csv
+
 # Editor/IDE
 # .idea/
 # .vscode/

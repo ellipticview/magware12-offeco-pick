@@ -37,7 +37,22 @@ func TestFileCSVExporterWritesHeaderAndRows(t *testing.T) {
 	rows, err := csv.NewReader(file).ReadAll()
 	require.NoError(t, err)
 	require.Len(t, rows, 2)
-	require.Equal(t, csvHeader, rows[0])
+	require.Equal(t, []string{
+		"ID",
+		"Datumdistributiedag",
+		"Naam",
+		"Straatnaam",
+		"Huisnummer",
+		"Huisnummertoevoeging",
+		"Postcode",
+		"Plaatsnaam",
+		"CountryCode",
+		"TelefoonNummer",
+		"Email",
+		"BezoekenNa",
+		"BezoekenVoor",
+		"Locatieinstructie",
+	}, rows[0])
 	require.Equal(t, []string{
 		"ORD-1",
 		"2026-04-18",

@@ -34,6 +34,9 @@ token.txt
 # Output file
 routigo-orders.csv
 
+# Local caches
+.gocache/
+
 # Editor/IDE
 # .idea/
 # .vscode/

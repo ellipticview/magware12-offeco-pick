@@ -28,20 +28,20 @@ value RemoteOrderData {
 }
 
 value CsvRow {
-    id: String
-    datumdistributiedag: String
-    naam: String
-    straatnaam: String
-    huisnummer: String
-    huisnummertoevoeging: String
-    postcode: String
-    plaatsnaam: String
-    country_code: String
-    telefoon_nummer: String
-    email: String
-    bezoeken_na: String
-    bezoeken_voor: String
-    locatieinstructie: String
+    ID: String
+    Datumdistributiedag: String
+    Naam: String
+    Straatnaam: String
+    Huisnummer: String
+    Huisnummertoevoeging: String
+    Postcode: String
+    Plaatsnaam: String
+    CountryCode: String
+    TelefoonNummer: String
+    Email: String
+    BezoekenNa: String
+    BezoekenVoor: String
+    Locatieinstructie: String
 }
 
 ------------------------------------------------------------
@@ -211,24 +211,24 @@ rule ExportQualifyingOrder {
             sequence_number: sequence_number,
             source_order: order,
             csv_row: {
-                id: order.external_display_id,
-                datumdistributiedag: distribution_date(now),
-                naam: export_name(
+                ID: order.external_display_id,
+                Datumdistributiedag: distribution_date(now),
+                Naam: export_name(
                     order.shipping_first_name ?? "",
                     order.shipping_last_name ?? "",
                     order.external_display_id
                 ),
-                straatnaam: order.billing_address ?? "",
-                huisnummer: order.shipping_house_number ?? "",
-                huisnummertoevoeging: order.shipping_house_number_addition ?? "",
-                postcode: order.shipping_zipcode ?? "",
-                plaatsnaam: order.shipping_city ?? "",
-                country_code: order.shipping_country,
-                telefoon_nummer: order.billing_phone ?? "",
-                email: order.billing_email ?? "",
-                bezoeken_na: "",
-                bezoeken_voor: "",
-                locatieinstructie: order.customer_note ?? ""
+                Straatnaam: order.billing_address ?? "",
+                Huisnummer: order.shipping_house_number ?? "",
+                Huisnummertoevoeging: order.shipping_house_number_addition ?? "",
+                Postcode: order.shipping_zipcode ?? "",
+                Plaatsnaam: order.shipping_city ?? "",
+                CountryCode: order.shipping_country,
+                TelefoonNummer: order.billing_phone ?? "",
+                Email: order.billing_email ?? "",
+                BezoekenNa: "",
+                BezoekenVoor: "",
+                Locatieinstructie: order.customer_note ?? ""
             }
         )
     ensures: current_download.exported_order_count = current_download.exported_order_count + 1

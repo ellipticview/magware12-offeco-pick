@@ -8,20 +8,20 @@ import (
 )
 
 var csvHeader = []string{
-	"id",
-	"datumdistributiedag",
-	"naam",
-	"straatnaam",
-	"huisnummer",
-	"huisnummertoevoeging",
-	"postcode",
-	"plaatsnaam",
-	"country_code",
-	"telefoon_nummer",
-	"email",
-	"bezoeken_na",
-	"bezoeken_voor",
-	"locatieinstructie",
+	"ID",
+	"Datumdistributiedag",
+	"Naam",
+	"Straatnaam",
+	"Huisnummer",
+	"Huisnummertoevoeging",
+	"Postcode",
+	"Plaatsnaam",
+	"CountryCode",
+	"TelefoonNummer",
+	"Email",
+	"BezoekenNa",
+	"BezoekenVoor",
+	"Locatieinstructie",
 }
 
 type CsvExporter interface {

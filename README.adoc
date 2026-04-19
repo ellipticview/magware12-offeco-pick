@@ -35,6 +35,11 @@ GitHub Actions builds the first `windows/amd64` target on pushes to `main` and o
 
 When you push a version tag such as `v1.0.0`, the same workflow also creates a GitHub Release and attaches the Windows executable there, which is the easiest place to download it from the GitHub website.
 
+----
+git tag v1.0.0
+git push origin v1.0.0
+----
+
 The module `go` version is currently kept at `1.24.6` so it remains compatible with the Go toolchain bundled inside the current `fyne-cross` Windows image, while local development can still use a newer Go release.
 
 == Vendor Information

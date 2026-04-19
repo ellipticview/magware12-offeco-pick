@@ -14,6 +14,21 @@ func normalizedCountry(value *string) string {
 	return strings.ToUpper(strings.TrimSpace(stringPtrValue(value)))
 }
 
+func exportHouseNumberAddition(addition *string, address2 *string) string {
+	parts := []string{}
+
+	for _, part := range []string{
+		strings.TrimSpace(stringPtrValue(addition)),
+		strings.TrimSpace(stringPtrValue(address2)),
+	} {
+		if part != "" {
+			parts = append(parts, part)
+		}
+	}
+
+	return strings.Join(parts, " ")
+}
+
 func isQualifyingOrder(order RemoteOrderData) bool {
 	if order.Status != "ready_for_picking" {
 		return false
@@ -34,7 +49,7 @@ func mapCSVRow(order RemoteOrderData, now string) CsvRow {
 		Naam:                 exportName(stringPtrValue(order.ShippingFirstName), stringPtrValue(order.ShippingLastName), order.ExternalDisplayID),
 		Straatnaam:           stringPtrValue(order.BillingAddress),
 		Huisnummer:           stringPtrValue(order.ShippingHouseNumber),
-		Huisnummertoevoeging: stringPtrValue(order.ShippingHouseNumberAddition),
+		Huisnummertoevoeging: exportHouseNumberAddition(order.ShippingHouseNumberAddition, order.ShippingAddress2),
 		Postcode:             stringPtrValue(order.ShippingZipcode),
 		Plaatsnaam:           stringPtrValue(order.ShippingCity),
 		CountryCode:          normalizedCountry(order.ShippingCountry),

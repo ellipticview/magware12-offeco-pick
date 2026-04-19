@@ -92,6 +92,17 @@ func TestMapCSVRowFallbacks(t *testing.T) {
 	require.Equal(t, "", row.BezoekenVoor)
 }
 
+func TestMapCSVRowCombinesHouseNumberAdditionAndAddress2(t *testing.T) {
+	row := mapCSVRow(RemoteOrderData{
+		ExternalDisplayID:           "ORD-4",
+		Status:                      "ready_for_picking",
+		ShippingHouseNumberAddition: strPtr("A"),
+		ShippingAddress2:            strPtr("Achterom"),
+	}, "2026-04-18")
+
+	require.Equal(t, "A Achterom", row.Huisnummertoevoeging)
+}
+
 func TestMapCSVRowNaamAppendsID(t *testing.T) {
 	row := mapCSVRow(RemoteOrderData{
 		ExternalDisplayID: "ORD-3",

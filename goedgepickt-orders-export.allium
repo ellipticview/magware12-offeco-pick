@@ -21,6 +21,7 @@ value RemoteOrderData {
     shipping_last_name: String?
     shipping_house_number: String?
     shipping_house_number_addition: String?
+    shipping_address_2: String?
     shipping_zipcode: String?
     shipping_city: String?
     shipping_country: String?
@@ -220,7 +221,10 @@ rule ExportQualifyingOrder {
                 ),
                 Straatnaam: order.billing_address ?? "",
                 Huisnummer: order.shipping_house_number ?? "",
-                Huisnummertoevoeging: order.shipping_house_number_addition ?? "",
+                Huisnummertoevoeging: combine_house_number_addition(
+                    order.shipping_house_number_addition ?? "",
+                    order.shipping_address_2 ?? ""
+                ),
                 Postcode: order.shipping_zipcode ?? "",
                 Plaatsnaam: order.shipping_city ?? "",
                 CountryCode: order.shipping_country,

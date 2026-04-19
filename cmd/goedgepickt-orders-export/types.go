@@ -37,6 +37,7 @@ type RemoteOrderData struct {
 	ShippingLastName            *string
 	ShippingHouseNumber         *string
 	ShippingHouseNumberAddition *string
+	ShippingAddress2            *string
 	ShippingZipcode             *string
 	ShippingCity                *string
 	ShippingCountry             *string

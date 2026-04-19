@@ -30,7 +30,7 @@ func TestHTTPOrdersClientFetchReadyForPicking(t *testing.T) {
 					return responseWithBody(http.StatusOK, `{
 						"pageInfo":{"lastPage":2},
 						"items":[
-							{"externalDisplayId":"ORD-1","status":"ready_for_picking","shippingCountry":"NL"},
+							{"externalDisplayId":"ORD-1","status":"ready_for_picking","shippingCountry":"NL","shippingHousenumberAddition":"A","shippingAddress2":"Achterom"},
 							{"external_display_id":"ORD-2","status":"ready_for_picking","shipping_country":"BE"}
 						]
 					}`)
@@ -61,6 +61,8 @@ func TestHTTPOrdersClientFetchReadyForPicking(t *testing.T) {
 		require.Len(t, items, 3)
 		require.Equal(t, []int{1, 2, 3}, sequences)
 		require.Equal(t, "ORD-1", items[0].ExternalDisplayID)
+		require.Equal(t, "A", stringPtrValue(items[0].ShippingHouseNumberAddition))
+		require.Equal(t, "Achterom", stringPtrValue(items[0].ShippingAddress2))
 		require.Equal(t, "BE", normalizedCountry(items[1].ShippingCountry))
 	})
 

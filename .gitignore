@@ -31,6 +31,9 @@ go.work.sum
 # Login token
 token.txt
 
+# Test data
+orders.json
+
 # Output file
 routigo-orders.csv
 

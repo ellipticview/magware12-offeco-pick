@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,8 +31,8 @@ func TestHTTPOrdersClientFetchReadyForPicking(t *testing.T) {
 					return responseWithBody(http.StatusOK, `{
 						"pageInfo":{"lastPage":2},
 						"items":[
-							{"externalDisplayId":"ORD-1","status":"ready_for_picking","shippingCountry":"NL","shippingHousenumberAddition":"A","shippingAddress2":"Achterom"},
-							{"external_display_id":"ORD-2","status":"ready_for_picking","shipping_country":"BE"}
+							{"externalDisplayId":"ORD-1","status":"ready_for_picking","billingAddress":"Factuurstraat","shippingAddress":"Verzendstraat","shippingCountry":"NL","shippingHousenumberAddition":"A","shippingAddress2":"Achterom"},
+							{"externalDisplayId":"ORD-2","status":"ready_for_picking","shippingCountry":"BE"}
 						]
 					}`)
 				case "2":
@@ -61,9 +62,28 @@ func TestHTTPOrdersClientFetchReadyForPicking(t *testing.T) {
 		require.Len(t, items, 3)
 		require.Equal(t, []int{1, 2, 3}, sequences)
 		require.Equal(t, "ORD-1", items[0].ExternalDisplayID)
+		require.Equal(t, "Verzendstraat", stringPtrValue(items[0].ShippingAddress))
 		require.Equal(t, "A", stringPtrValue(items[0].ShippingHouseNumberAddition))
 		require.Equal(t, "Achterom", stringPtrValue(items[0].ShippingAddress2))
 		require.Equal(t, "BE", normalizedCountry(items[1].ShippingCountry))
+	})
+
+	t.Run("decodes only exact orders json field names", func(t *testing.T) {
+		item := decodeRemoteOrder(map[string]json.RawMessage{
+			"external_display_id":         json.RawMessage(`"ORD-SNAKE"`),
+			"externalDisplayId":           json.RawMessage(`"ORD-EXACT"`),
+			"shipping_house_number":       json.RawMessage(`"99"`),
+			"shippingHouseNumber":         json.RawMessage(`"10"`),
+			"shippingHouseNumberAddition": json.RawMessage(`"ignored"`),
+			"shippingHousenumberAddition": json.RawMessage(`"A"`),
+			"shipping_country":            json.RawMessage(`"ignored"`),
+			"shippingCountry":             json.RawMessage(`"NL"`),
+		})
+
+		require.Equal(t, "ORD-EXACT", item.ExternalDisplayID)
+		require.Equal(t, "10", stringPtrValue(item.ShippingHouseNumber))
+		require.Equal(t, "A", stringPtrValue(item.ShippingHouseNumberAddition))
+		require.Equal(t, "NL", stringPtrValue(item.ShippingCountry))
 	})
 
 	t.Run("non success response aborts", func(t *testing.T) {

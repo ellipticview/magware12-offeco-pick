@@ -107,9 +107,6 @@ func extractLastPage(payload map[string]json.RawMessage) (int, error) {
 	var pageInfo map[string]json.RawMessage
 	pageInfoRaw, ok := payload["pageInfo"]
 	if !ok {
-		pageInfoRaw, ok = payload["page_info"]
-	}
-	if !ok {
 		return 0, fmt.Errorf("orders-response mist pageInfo.lastPage")
 	}
 
@@ -118,9 +115,6 @@ func extractLastPage(payload map[string]json.RawMessage) (int, error) {
 	}
 
 	lastPageRaw, ok := pageInfo["lastPage"]
-	if !ok {
-		lastPageRaw, ok = pageInfo["last_page"]
-	}
 	if !ok {
 		return 0, fmt.Errorf("orders-response mist pageInfo.lastPage")
 	}
@@ -161,55 +155,49 @@ func extractItems(payload map[string]json.RawMessage) ([]RemoteOrderData, error)
 
 func decodeRemoteOrder(raw map[string]json.RawMessage) RemoteOrderData {
 	return RemoteOrderData{
-		ExternalDisplayID:           readRequiredString(raw, "external_display_id", "externalDisplayId"),
+		ExternalDisplayID:           readRequiredString(raw, "externalDisplayId"),
 		Status:                      readRequiredString(raw, "status"),
-		BillingAddress:              readOptionalString(raw, "billing_address", "billingAddress"),
-		BillingPhone:                readOptionalString(raw, "billing_phone", "billingPhone"),
-		BillingEmail:                readOptionalString(raw, "billing_email", "billingEmail"),
-		ShippingFirstName:           readOptionalString(raw, "shipping_first_name", "shippingFirstName"),
-		ShippingLastName:            readOptionalString(raw, "shipping_last_name", "shippingLastName"),
-		ShippingHouseNumber:         readOptionalString(raw, "shipping_house_number", "shippingHouseNumber"),
-		ShippingHouseNumberAddition: readOptionalString(raw, "shipping_house_number_addition", "shippingHouseNumberAddition", "shippingHousenumberAddition"),
-		ShippingAddress2:            readOptionalString(raw, "shipping_address_2", "shippingAddress2"),
-		ShippingZipcode:             readOptionalString(raw, "shipping_zipcode", "shippingZipcode"),
-		ShippingCity:                readOptionalString(raw, "shipping_city", "shippingCity"),
-		ShippingCountry:             readOptionalString(raw, "shipping_country", "shippingCountry"),
-		CustomerNote:                readOptionalString(raw, "customer_note", "customerNote"),
+		BillingPhone:                readOptionalString(raw, "billingPhone"),
+		BillingEmail:                readOptionalString(raw, "billingEmail"),
+		ShippingFirstName:           readOptionalString(raw, "shippingFirstName"),
+		ShippingLastName:            readOptionalString(raw, "shippingLastName"),
+		ShippingAddress:             readOptionalString(raw, "shippingAddress"),
+		ShippingHouseNumber:         readOptionalString(raw, "shippingHouseNumber"),
+		ShippingHouseNumberAddition: readOptionalString(raw, "shippingHousenumberAddition"),
+		ShippingAddress2:            readOptionalString(raw, "shippingAddress2"),
+		ShippingZipcode:             readOptionalString(raw, "shippingZipcode"),
+		ShippingCity:                readOptionalString(raw, "shippingCity"),
+		ShippingCountry:             readOptionalString(raw, "shippingCountry"),
+		CustomerNote:                readOptionalString(raw, "customerNote"),
 	}
 }
 
-func readRequiredString(raw map[string]json.RawMessage, keys ...string) string {
-	for _, key := range keys {
-		valueRaw, ok := raw[key]
-		if !ok {
-			continue
-		}
-
-		var value string
-		if err := json.Unmarshal(valueRaw, &value); err == nil {
-			return value
-		}
+func readRequiredString(raw map[string]json.RawMessage, key string) string {
+	valueRaw, ok := raw[key]
+	if !ok {
+		return ""
 	}
 
+	var value string
+	if err := json.Unmarshal(valueRaw, &value); err == nil {
+		return value
+	}
 	return ""
 }
 
-func readOptionalString(raw map[string]json.RawMessage, keys ...string) *string {
-	for _, key := range keys {
-		valueRaw, ok := raw[key]
-		if !ok {
-			continue
-		}
-
-		if string(valueRaw) == "null" {
-			return nil
-		}
-
-		var value string
-		if err := json.Unmarshal(valueRaw, &value); err == nil {
-			return &value
-		}
+func readOptionalString(raw map[string]json.RawMessage, key string) *string {
+	valueRaw, ok := raw[key]
+	if !ok {
+		return nil
 	}
 
+	if string(valueRaw) == "null" {
+		return nil
+	}
+
+	var value string
+	if err := json.Unmarshal(valueRaw, &value); err == nil {
+		return &value
+	}
 	return nil
 }

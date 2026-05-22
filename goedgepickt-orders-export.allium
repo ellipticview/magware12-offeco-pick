@@ -12,20 +12,20 @@
 ------------------------------------------------------------
 
 value RemoteOrderData {
-    external_display_id: String
+    externalDisplayId: String
     status: String
-    billing_address: String?
-    billing_phone: String?
-    billing_email: String?
-    shipping_first_name: String?
-    shipping_last_name: String?
-    shipping_house_number: String?
-    shipping_house_number_addition: String?
-    shipping_address_2: String?
-    shipping_zipcode: String?
-    shipping_city: String?
-    shipping_country: String?
-    customer_note: String?
+    shippingAddress: String?
+    billingPhone: String?
+    billingEmail: String?
+    shippingFirstName: String?
+    shippingLastName: String?
+    shippingHouseNumber: String?
+    shippingHousenumberAddition: String?
+    shippingAddress2: String?
+    shippingZipcode: String?
+    shippingCity: String?
+    shippingCountry: String?
+    customerNote: String?
 }
 
 value CsvRow {
@@ -204,40 +204,40 @@ rule ExportQualifyingOrder {
     when: RemoteOrderReceived(api, current_download, order, sequence_number)
     requires: current_download.status = in_progress
     requires: order.status = "ready_for_picking"
-    requires: order.shipping_country != null
-    requires: order.shipping_country in { "NL", "BE" }
+    requires: order.shippingCountry != null
+    requires: order.shippingCountry in { "NL", "BE" }
     ensures:
         ExportedOrder.created(
             run: current_download,
             sequence_number: sequence_number,
             source_order: order,
             csv_row: {
-                ID: order.external_display_id,
+                ID: order.externalDisplayId,
                 Datumdistributiedag: distribution_date(now),
                 Naam: export_name(
-                    order.shipping_first_name ?? "",
-                    order.shipping_last_name ?? "",
-                    order.external_display_id
+                    order.shippingFirstName ?? "",
+                    order.shippingLastName ?? "",
+                    order.externalDisplayId
                 ),
-                Straatnaam: order.billing_address ?? "",
-                Huisnummer: order.shipping_house_number ?? "",
+                Straatnaam: order.shippingAddress ?? "",
+                Huisnummer: order.shippingHouseNumber ?? "",
                 Huisnummertoevoeging: combine_house_number_addition(
-                    order.shipping_house_number_addition ?? "",
-                    order.shipping_address_2 ?? ""
+                    order.shippingHousenumberAddition ?? "",
+                    order.shippingAddress2 ?? ""
                 ),
-                Postcode: order.shipping_zipcode ?? "",
-                Plaatsnaam: order.shipping_city ?? "",
-                CountryCode: order.shipping_country,
-                TelefoonNummer: order.billing_phone ?? "",
-                Email: order.billing_email ?? "",
+                Postcode: order.shippingZipcode ?? "",
+                Plaatsnaam: order.shippingCity ?? "",
+                CountryCode: order.shippingCountry,
+                TelefoonNummer: order.billingPhone ?? "",
+                Email: order.billingEmail ?? "",
                 BezoekenNa: "",
                 BezoekenVoor: "",
-                Locatieinstructie: order.customer_note ?? ""
+                Locatieinstructie: order.customerNote ?? ""
             }
         )
     ensures: current_download.exported_order_count = current_download.exported_order_count + 1
     ensures:
-        if order.shipping_country = "NL":
+        if order.shippingCountry = "NL":
             current_download.nl_exported_order_count = current_download.nl_exported_order_count + 1
         else:
             current_download.be_exported_order_count = current_download.be_exported_order_count + 1
@@ -245,7 +245,7 @@ rule ExportQualifyingOrder {
         ProgressMessage.created(
             run: current_download,
             sequence_number: next_progress_sequence(current_download),
-            text: export_progress_message(order.shipping_country, order.shipping_city ?? ""),
+            text: export_progress_message(order.shippingCountry, order.shippingCity ?? ""),
             kind: progress
         )
     @guidance
@@ -302,15 +302,15 @@ invariant ExportCountMatchesRows {
 invariant CountryCountsMatchRows {
     for run in DownloadRuns:
         run.nl_exported_order_count =
-            (run.exported_orders where source_order.shipping_country = "NL").count
+            (run.exported_orders where source_order.shippingCountry = "NL").count
         and
         run.be_exported_order_count =
-            (run.exported_orders where source_order.shipping_country = "BE").count
+            (run.exported_orders where source_order.shippingCountry = "BE").count
 }
 
 invariant OnlyNlAndBeAreExported {
     for exported in ExportedOrders:
-        exported.source_order.shipping_country in { "NL", "BE" }
+        exported.source_order.shippingCountry in { "NL", "BE" }
 }
 
 invariant OnlyReadyForPickingOrdersAreExported {

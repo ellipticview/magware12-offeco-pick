@@ -19,11 +19,11 @@ func TestFileCSVExporterWritesHeaderAndRows(t *testing.T) {
 	require.NoError(t, exporter.Append(mapCSVRow(RemoteOrderData{
 		ExternalDisplayID: "ORD-1",
 		Status:            "ready_for_picking",
-		BillingAddress:    strPtr("Hoofdstraat"),
 		BillingPhone:      strPtr("0612345678"),
 		BillingEmail:      strPtr("test@example.com"),
 		ShippingFirstName: strPtr("Ada"),
 		ShippingLastName:  strPtr("Lovelace"),
+		ShippingAddress:   strPtr("Hoofdstraat"),
 		ShippingCountry:   strPtr("nl"),
 		ShippingCity:      strPtr("Amsterdam"),
 		CustomerNote:      strPtr("Bel aan"),

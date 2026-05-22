@@ -30,11 +30,11 @@ const (
 type RemoteOrderData struct {
 	ExternalDisplayID           string
 	Status                      string
-	BillingAddress              *string
 	BillingPhone                *string
 	BillingEmail                *string
 	ShippingFirstName           *string
 	ShippingLastName            *string
+	ShippingAddress             *string
 	ShippingHouseNumber         *string
 	ShippingHouseNumberAddition *string
 	ShippingAddress2            *string

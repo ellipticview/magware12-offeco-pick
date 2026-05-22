@@ -47,7 +47,7 @@ func mapCSVRow(order RemoteOrderData, now string) CsvRow {
 		ID:                   order.ExternalDisplayID,
 		DatumDistributiedag:  now,
 		Naam:                 exportName(stringPtrValue(order.ShippingFirstName), stringPtrValue(order.ShippingLastName), order.ExternalDisplayID),
-		Straatnaam:           stringPtrValue(order.BillingAddress),
+		Straatnaam:           stringPtrValue(order.ShippingAddress),
 		Huisnummer:           stringPtrValue(order.ShippingHouseNumber),
 		Huisnummertoevoeging: exportHouseNumberAddition(order.ShippingHouseNumberAddition, order.ShippingAddress2),
 		Postcode:             stringPtrValue(order.ShippingZipcode),
